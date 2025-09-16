@@ -3,8 +3,5 @@
 h1{color: aquamarine;}
 p{color: brown;}
 
-img {
-  width: 100%; /* 親要素の幅に合わせる */
-  height: auto; /* 縦横比を維持して高さを自動調整 */
-  max-width: 100%; /* 画像が拡大されすぎるのを防ぐ */
-}
+
+
