@@ -3,8 +3,8 @@
 h1{color: aquamarine;}
 p{color: brown;}
 
-img {
-  width: 100%; 
-  height: auto; 
-  max-width: 100%; 
+.image-container img {
+  width: 100%; /* 親要素の幅に合わせる */
+  height: 100%; /* 親要素の高さに合わせる */
+  object-fit: cover; /* 画像が親要素を覆うようにアスペクト比を維持 */
 }
