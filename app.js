@@ -3,13 +3,15 @@ const btn = document.getElementById('getLocationAndAddressBtn');
 const latitudeSpan = document.getElementById('latitude');
 const longitudeSpan = document.getElementById('longitude');
 const addressSpan = document.getElementById('address');
+const municipalityNameSpan = document.getElementById('municipalityName'); // ★ 追加
+const muniCodeSpan = document.getElementById('muniCode');
 const statusMessage = document.getElementById('statusMessage');
 
-// ボタンがクリックされたときの処理
+// (ボタンのクリックイベントやGeolocation関連の関数は変更なし)
+// ...
 btn.addEventListener('click', () => {
     statusMessage.textContent = '現在地の座標を取得中です...';
     
-    // ブラウザがGeolocation APIに対応しているかチェック
     if (navigator.geolocation) {
         navigator.geolocation.getCurrentPosition(geolocationSuccess, geolocationError);
     } else {
@@ -17,26 +19,18 @@ btn.addEventListener('click', () => {
     }
 });
 
-/**
- * Geolocation APIでの位置情報取得が成功したときの処理
- */
 function geolocationSuccess(position) {
     statusMessage.textContent = '座標の取得に成功しました。住所を検索中です...';
     
     const latitude = position.coords.latitude;
     const longitude = position.coords.longitude;
 
-    // 取得した座標を画面に表示
     latitudeSpan.textContent = latitude;
     longitudeSpan.textContent = longitude;
 
-    // 取得した座標を使って、国土地理院APIで住所を取得
     getAddressFromCoords(latitude, longitude);
 }
 
-/**
- * Geolocation APIでの位置情報取得が失敗したときの処理
- */
 function geolocationError(error) {
     let message = "";
     switch (error.code) {
@@ -55,37 +49,53 @@ function geolocationError(error) {
     }
     statusMessage.textContent = message;
 }
+/**
+ * 住所文字列から市区町村名を抽出するヘルパー関数
+ * @param {string} fullAddress - 完全な住所文字列
+ * @returns {string|null} - 抽出した市区町村名、見つからない場合はnull
+ */
+function parseMunicipality(fullAddress) {
+    // 例: "東京都千代田区" や "北海道札幌市中央区" などを抽出する正規表現
+    const regex = /.+?[都道府県](.+?郡.+?[町村]|.+?[市区町村])/;
+    const match = fullAddress.match(regex);
+    return match ? match[1] : null;
+}
 
 /**
  * 座標から住所を取得する (国土地理院API)
- * @param {number} lat - 緯度
- * @param {number} lon - 経度
  */
 async function getAddressFromCoords(lat, lon) {
-    // APIのエンドポイントURLを構築
     const endpoint = `https://mreversegeocoder.gsi.go.jp/reverse-geocoder/LonLatToAddress?lat=${lat}&lon=${lon}`;
     
     try {
         const response = await fetch(endpoint);
-        if (!response.ok) {
-            throw new Error(`APIエラー: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`APIエラー: ${response.status}`);
         
         const data = await response.json();
         
-        // 国土地理院APIのレスポンスから住所情報を取得
         if (data.results) {
-            const address = data.results.lv01Nm; // 'lv01Nm' に住所文字列が含まれる
-            addressSpan.textContent = address;
+            const fullAddress = data.results.lv01Nm;
+            const muniCode = data.results.muniCd;
+            const municipalityName = parseMunicipality(fullAddress); // ★ 追加
+
+            addressSpan.textContent = fullAddress;
+            muniCodeSpan.textContent = muniCode;
+            municipalityNameSpan.textContent = municipalityName || '抽出できませんでした'; // ★ 追加
             statusMessage.textContent = '住所の取得が完了しました。';
         } else {
+            // ... エラー時の表示をリセット ...
             addressSpan.textContent = '該当する住所が見つかりませんでした。';
+            muniCodeSpan.textContent = '---';
+            municipalityNameSpan.textContent = '---';
             statusMessage.textContent = '';
         }
 
     } catch (error) {
+        // ... エラー時の表示をリセット ...
         console.error('国土地理院APIでの取得に失敗しました:', error);
         statusMessage.textContent = '住所の取得に失敗しました。';
         addressSpan.textContent = '---';
+        muniCodeSpan.textContent = '---';
+        municipalityNameSpan.textContent = '---';
     }
 }
