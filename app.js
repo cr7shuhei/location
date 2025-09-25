@@ -3,7 +3,7 @@ const btn = document.getElementById('getLocationAndAddressBtn');
 const latitudeSpan = document.getElementById('latitude');
 const longitudeSpan = document.getElementById('longitude');
 const addressSpan = document.getElementById('address');
-const municipalityNameSpan = document.getElementById('municipalityName'); // ★ 追加
+const municipalityNameSpan = document.getElementById('municipalityName');
 const muniCodeSpan = document.getElementById('muniCode');
 const statusMessage = document.getElementById('statusMessage');
 
@@ -44,20 +44,23 @@ function geolocationError(error) {
             message = "位置情報の取得がタイムアウトしました。";
             break;
         default:
-            message = "原因不明のエラーが発生しました。";
-            break;
+        message = "原因不明のエラーが発生しました。";
+        break;
     }
     statusMessage.textContent = message;
 }
 /**
+ * ★★★ 修正された関数 ★★★
  * 住所文字列から市区町村名を抽出するヘルパー関数
  * @param {string} fullAddress - 完全な住所文字列
  * @returns {string|null} - 抽出した市区町村名、見つからない場合はnull
  */
 function parseMunicipality(fullAddress) {
-    // 例: "東京都千代田区" や "北海道札幌市中央区" などを抽出する正規表現
-    const regex = /.+?[都道府県](.+?郡.+?[町村]|.+?[市区町村])/;
+    // 都道府県の後の、市区町村名を抽出する改善された正規表現
+    const regex = /^(?:.+?[都道府県])(.+?[市町村区])/;
     const match = fullAddress.match(regex);
+    
+    // マッチした場合、2番目のキャプチャグループ（市区町村名）を返す
     return match ? match[1] : null;
 }
 
@@ -76,11 +79,11 @@ async function getAddressFromCoords(lat, lon) {
         if (data.results) {
             const fullAddress = data.results.lv01Nm;
             const muniCode = data.results.muniCd;
-            const municipalityName = parseMunicipality(fullAddress); // ★ 追加
+            const municipalityName = parseMunicipality(fullAddress); // 修正された関数を呼び出し
 
             addressSpan.textContent = fullAddress;
             muniCodeSpan.textContent = muniCode;
-            municipalityNameSpan.textContent = municipalityName || '抽出できませんでした'; // ★ 追加
+            municipalityNameSpan.textContent = municipalityName || '抽出できませんでした';
             statusMessage.textContent = '住所の取得が完了しました。';
         } else {
             // ... エラー時の表示をリセット ...
